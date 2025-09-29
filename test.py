@@ -28,6 +28,24 @@ def save_images(images, labels, batch_idx):
         img = (img * 255).astype(np.uint8)
         skimage.io.imsave(f"results/{labels[i]}_{batch_idx}_{i}.png", img)
 
+# 在测试脚本中添加
+def generate_report(model, test_loader, psf):
+    visualizer = ImagingVisualizer(psf)
+
+    # 1. PSF可视化
+    visualizer.visualize_psf('report/psf.png')
+
+    # 2. 随机样本处理流程
+    sample = next(iter(test_loader))[0]
+    visualizer.visualize_processing(sample, 'report/sample_process.png')
+
+    # 3. 特征图可视化
+    visualizer.visualize_feature_maps(model, sample, 'report/features.png')
+
+    # 4. 重建对比
+    batch = next(iter(test_loader))[:4]
+    visualizer.visualize_reconstruction_comparison(batch, 'report/comparison.png')
+
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,3 +61,11 @@ if __name__ == "__main__":
 
     # 运行测试
     test(test_loader, recon_net, face_net, device)
+
+    # 在train.py中添加
+    if epoch % 10 == 0:
+        visualizer = ImagingVisualizer(psf)
+        visualizer.visualize_processing(
+            test_batch[0],
+            save_path=f'results/epoch_{epoch}_process.png'
+        )
